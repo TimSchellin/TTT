@@ -1,10 +1,3 @@
-
-//hi tim and dan i'm just testing to see
-//if i can actually pull from github 
-//and open it in my ide
-//so i'm adding a bunch of random lines
-
-
 #include <iostream>
 #include <string>
 
@@ -22,26 +15,36 @@ void initBoard(char[][3]);
 void userInput(char[][3], int&, int&);
 bool posAvailable(char[][3], int&, int&);
 void hintPrompt();
-void AIMove(char[][3], int&, int&);
+void AIMove(char[][3], int&, int&); //added int q char w char grid
 void placeOnBoard(char[][3], int&, int&, char);
-void align(int [][3], int&, int, int);
+void alignGridSymb(char[][3], char[][3]);
+void alignGridNum(int [][3], int&, int, int); //change name from align to alignGridNum to prevent confusion with alignGridSymb()
 void createAlignments();
 void print2dArray(int [][3]);
-void testAlignments();
-void toBeDeleted();
+void testAlignments(int [][3]);
+void createGrid(char[][3], char[]); //char board char grid
+bool winOrBlock(int[][3], char[][3], char[]); //int q, char w, char grid
+void outputGrid(char[][3], char[]);
+void outputAlignSymb(char[][3], char [][3]); //board, w
 
 int main() {
 
-    testAlignments();
 
     string displayBoard[5][5];
     char board[3][3];
-
+    char grid[9]; //added grid to more intuitively place the marked position & to transcribe 2d arrays to 1d
+    int q[8][3]; //thought this should be declared here instead of inside a function. this contains the alignment combos for grid location
+    char w[8][3]; //this contains the alignment combos for grid symbol 
     bool userTurn = true;
     int row;
     int col;
     int checkPos;
     char replay = 'y';
+
+    //TESTING -- TO BE DELETED LATERRR  
+    testAlignments(q);
+    outputGrid(board, grid);
+    outputAlignSymb(board, w);
 
     while (replay == 'y' || replay == 'Y') {
         initBoard(board);
@@ -52,9 +55,11 @@ int main() {
                 userInput(board, row, col);
                 board[row][col] = 'X';
             } else {
+                createGrid(board, grid);
                 AIMove(board, row, col);
                 printBuffer(100);
                 cout << "(the AI moved to spot x, y)\n" << endl;
+                outputAlignSymb(board, w);
             }
             userTurn = !userTurn;
         }
@@ -158,7 +163,10 @@ void hintPrompt() {
     }
 }
 
+//added q, w, grid
+
 void AIMove(char board[][3], int& row, int& col) {
+
     //tells if a position is found
     bool found = false;
 
@@ -172,6 +180,7 @@ void AIMove(char board[][3], int& row, int& col) {
         }
     }
     placeOnBoard(board, row, col, 'O');
+
 }
 
 void placeOnBoard(char board[][3], int& row, int& col, char symbol) {
@@ -225,15 +234,15 @@ void computerMove(char board[][3]) {
     // take corner
 }
 
-void initQ(int q[][3]) {
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 3; j++) {
-            q[i][j] = 0;
-        }
-    }
-}
+//void initQ(int q[][3]) {
+//    for (int i = 0; i < 8; i++) {
+//        for (int j = 0; j < 3; j++) {
+//            q[i][j] = 0;
+//        }
+//    }
+//}
 
-void align(int q[][3], int &c, int pos, int skip) {
+void alignGridNum(int q[][3], int &c, int pos, int skip) {
     cout << endl;
     for (int i = 0; i < 3; i++) {
         q[c][i] = pos;
@@ -242,22 +251,71 @@ void align(int q[][3], int &c, int pos, int skip) {
     c++;
 }
 
+//this function creates the array alignment of the grid symbol
+
+void alignGridSymb(char board[][3], char w[][3]) {
+    //rows
+    w[0][0] = board[0][0]; //0
+    w[0][1] = board[0][1]; //1
+    w[0][2] = board[0][2]; //2
+
+    w[1][0] = board[1][0]; //3
+    w[1][1] = board[1][1]; //4
+    w[1][2] = board[1][2]; //5
+
+    w[2][0] = board[2][0]; //6
+    w[2][1] = board[2][1]; //7
+    w[2][2] = board[2][2]; //8
+
+    w[3][0] = board[0][2]; //2
+    w[3][1] = board[1][1]; //4
+    w[3][2] = board[2][0]; //6
+
+    w[4][0] = board[0][0]; //0
+    w[4][1] = board[1][0]; //3
+    w[4][2] = board[2][0]; //6
+
+    w[5][0] = board[0][1]; //1
+    w[5][1] = board[1][1]; //4
+    w[5][2] = board[2][1]; //7
+
+    w[6][0] = board[0][2]; //2
+    w[6][1] = board[1][2]; //5
+    w[6][2] = board[2][2]; //8
+
+    w[7][0] = board[0][0]; //0
+    w[7][1] = board[1][1]; //4
+    w[7][2] = board[2][2]; //8
+}
+
+
+void outputAlignSymb(char board[][3], char w[][3]){
+    alignGridSymb(board, w);
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 3; j++) {
+            cout << w[i][j];
+        }
+        cout << endl;
+    }
+}
+//this function creates the array alignment of the grid location
+
 void createAlignments(int alignments[][3]) {
     int c = 0;
 
     for (int i = 1; i < 5; i++) {
         if (i % 2 == 0) {
             if (i == 2) {
-                align(alignments, c, 2, i);
+                alignGridNum(alignments, c, 2, i);
             } else {
-                align(alignments, c, 0, i);
+                alignGridNum(alignments, c, 0, i);
             }
         } else {
             for (int j = 0; j < 3; j++) {
                 if (i == 1) {
-                    align(alignments, c, j * 3, i);
+                    alignGridNum(alignments, c, j * 3, i);
                 } else {
-                    align(alignments, c, j, i);
+                    alignGridNum(alignments, c, j, i);
                 }
             }
         }
@@ -273,13 +331,57 @@ void print2dArray(int arr[][3]) {
     }
 }
 
-void testAlignments() {
-    int q[8][3];
-    initQ(q);
+void testAlignments(int q[][3]) {
+    //    int q[8][3];
+    //    initQ(q);
     createAlignments(q);
     print2dArray(q);
 }
 
-void toBeDeleted() {
-    cout << "goodbye world";
+void createGrid(char board[][3], char grid[]) {
+
+    grid[0] = board[0][0];
+    grid[1] = board[0][1];
+    grid[2] = board[0][2];
+    grid[3] = board[1][0];
+    grid[4] = board[1][1];
+    grid[5] = board[1][2];
+    grid[6] = board[2][0];
+    grid[7] = board[2][1];
+    grid[8] = board[2][2];
+}
+
+void outputGrid(char board[][3], char grid[]){
+    createGrid(board, grid);
+    for (int i = 0; i < 9; i ++){
+        cout << "grid[" << i << "]: " << i << endl;
+    }
+}
+
+bool winOrBlock(int q[][3], char w[][3], char grid[]) {
+    //loop through w and find if there is an alignment containing a blank space and two symbols of the same kind 
+    for (int i = 0; i < 8; i++) {
+        //initialize count for finding a particular symbol
+        int countO = 0;
+        int countX = 0;
+        //loop through each set of alignment (3 symbols/blank per alignment)
+        for (int j = 0; j < 3; j++) {
+            if (w[i][j] == 'O') {
+                countO++;
+            } else if (w[i][j] == 'X') {
+                countX++;
+            }
+            //if an alignment has two of the same with a blank and should be block or can win
+            if ((countX == 2 && countO == 0) || (countO == 2 && countX == 0)) {
+                for (int k = 0; k < 3; k++) {
+                    if (w[i][k] == ' ') {
+                        int placeOnGrid = w[i][k];
+                        grid[placeOnGrid] = 'O';
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
 }
