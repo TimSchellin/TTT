@@ -5,21 +5,24 @@
 using namespace std;
 
 //declaring function prototypes
-bool playerWin(char[][3], char);
-bool boardFull(char[][3]);
-bool gameOver(char[][3]);
+bool playerWin(char[9], char);
+bool boardFull(char[9]);
+bool gameOver(char[9]);
 
 bool isEven(int);
 void printBuffer(int);
-void display(char[][3], string[][5]);
-void initBoard(char[][3]);
-void userInput(char[][3], int&, int&);
-bool posAvailable(char[][3], int&, int&);
+void display(char[9], string[][5]);
+void initBoard(char[9]);
+void userInput(char[9], int&);
+bool posAvailable(char[9], int&);
 void hintPrompt();
-void AIMove(char[][3], int&, int&);
-void placeOnBoard(char[][3], int&, int&, char);
+void computerMove(char[9], int&);
+void placeOnBoard(char[9], int&, char);
 void align(int [][3], int&, int, int);
-void createAlignments();
+void createAlignments(int [][3]);
+
+//debugging functions
+void initQ(int [][3]);
 void print2dArray(int [][3]);
 void testAlignments();
 
@@ -28,11 +31,10 @@ int main() {
     testAlignments();
 
     string displayBoard[5][5];
-    char board[3][3];
+    char board[9];
 
     bool userTurn = true;
-    int row;
-    int col;
+    int space;
     int checkPos;
     char replay = 'y';
 
@@ -42,11 +44,11 @@ int main() {
         while(!gameOver(board)){  
             if (userTurn){
                 display(board, displayBoard);
-                userInput(board, row, col);
-                board[row][col] = 'X';
+                userInput(board, space);
+                board[space] = 'X';
             }
             else{
-                AIMove(board, row, col);
+                computerMove(board, space);
                 printBuffer(100);
                 cout << "(the AI moved to spot x, y)\n" << endl;
             }
@@ -62,10 +64,10 @@ int main() {
         //Implement HINT:
 
         //prompt the user to input a location on the board. Keep prompting if the position is not available.
-        //userInput(row, col);
+        //userInput(space);
         //check: Available()
-        /*while (!posAvailable(board, row, col)) {
-            //userInput(row, col);
+        /*while (!posAvailable(board, space)) {
+            //userInput(space);
         }*/
 
         //place down the mark
@@ -79,15 +81,14 @@ bool isEven(int checkPos) {
     return false;
 }
 
-void initBoard(char board [][3]) {
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            board[i][j] = ' ';
-        }
+void initBoard(char board[9]) {
+    for (int i = 0; i < 9; i++) {
+        char c = i;
+        board[i] = c;
     }
 }
 
-void display(char board[][3], string displayBoard[][5]) {
+void display(char board[9], string displayBoard[][5]) {
     for (int i = 0; i < 5; i++) {
         for (int j = 0; j < 5; j++) {
             if (isEven(i) && !isEven(j)) {
@@ -98,7 +99,7 @@ void display(char board[][3], string displayBoard[][5]) {
                 displayBoard[i][j] = "---";
             } else {
                 string buffer = "  ";
-                displayBoard[i][j] = buffer.insert(1, 1, board[i / 2][j / 2]);
+                //displayBoard[i][j] = buffer.insert(1, 1, board[i / 2][j / 2]);
             }
         }
     }
@@ -121,25 +122,24 @@ void display(char board[][3], string displayBoard[][5]) {
     }
 }
 
-void userInput(char board[][3], int& row, int& col) {
+void userInput(char board[9], int& space) {
     cout << "\nEnter the location where you want to place your mark.\n" << endl;
-    cout << "\t\tRow: ";
-    cin >> row;
-    cout << "\t\tCol: ";
-    cin >> col;
-    if(!posAvailable(board, row, col)){
+    cout << "\t\tspace: ";
+    cin >> space;
+    space -= 1;
+    if(!posAvailable(board, space)){
         cout << "that is not a valid location, try again." << endl;
-        userInput(board, row, col);
+        userInput(board, space);
     }
 }
 
-bool posAvailable(char board[][3], int& row, int& col) {
-    if (board[row][col] != ' ') {
+bool posAvailable(char board[9], int& space) {
+    if (board[space] != ' ') {
         return false;
-    } else if (row < 0 || row > 2 || col < 0 || col > 2) {
+    } 
+    else if (space < 0 || space > 9) {
         return false;
     }
-
     return true;
 }
 
@@ -153,27 +153,11 @@ void hintPrompt() {
     }
 }
 
-void AIMove(char board[][3], int& row, int& col) {
-    //tells if a position is found
-    bool found = false;
-
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            if (posAvailable(board, i, j) && !found) {
-                row = i;
-                col = j;
-                found = true;
-            }
-        }
-    }
-    placeOnBoard(board, row, col, 'O');
+void placeOnBoard(char board[9], int& space, char symbol) {
+    board[space] = symbol;
 }
 
-void placeOnBoard(char board[][3], int& row, int& col, char symbol) {
-    board[row][col] = symbol;
-}
-
-bool gameOver(char board[][3]){
+bool gameOver(char board[9]){
     if(playerWin(board, 'X')){
         cout << "X wins!";
         return true;
@@ -191,18 +175,16 @@ bool gameOver(char board[][3]){
     }
 }
 
-bool boardFull(char board[][3]){
-    for(int i = 0; i < 5; i++){
-        for(int j = 0; j < 5; j++){
-            if(board[i][j] == ' '){
-    return false;
-}
+bool boardFull(char board[9]){
+    for(int i = 0; i < 9; i++){
+        if(!(board[i] == 'X' || board[i] == 'O')){
+            return false;
         }
     }
     return true;
 }
 
-bool playerWin(char board[][3], char symbol){
+bool playerWin(char board[9], char symbol){
     return false;
 }
 
@@ -212,7 +194,7 @@ void printBuffer(int lines){
     }
 }
 
-void computerMove(char board[][3]){
+void computerMove(char board[9]){
     cout << "boop";
     // create a 2d array of pointers
 
@@ -221,14 +203,20 @@ void computerMove(char board[][3]){
     // take middle
     // if player has two opposite corners, take a middle edge space
     // take corner
+
+    //create alignments array
+    int q[8][3];
+    createAlignments(q);
+
+    // not completed
 }
 
-void initQ(int q[][3]){
-    for(int i = 0; i < 8; i++){
-        for(int j = 0; j<3;j++){
-            q[i][j]=0;
-        }
-    }
+int findEmpty(int board[9]){
+    return 0;
+}
+
+int completeRow(int board[9], int q[][3], char symbol){
+    return 0;
 }
 
 void align(int q[][3], int &c, int pos, int skip){
@@ -265,6 +253,19 @@ void createAlignments(int alignments[][3]){
     }
 }
 
+//
+//
+// THE FUNCTIONS BELOW ARE FOR DUBUGGING PURPOSES ONLY
+//
+//
+
+void initQ(int q[][3]){
+    for(int i = 0; i < 8; i++){
+        for(int j = 0; j<3;j++){
+            q[i][j]=0;
+        }
+    }
+}
 
 void print2dArray(int arr[][3]){
     for(int x = 0; x < 8; x++){
