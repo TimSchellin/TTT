@@ -7,7 +7,6 @@ using namespace std;
 bool playerWin(char[][3], char);
 bool boardFull(char[][3]);
 bool gameOver(char[][3]);
-
 bool isEven(int);
 void printBuffer(int);
 void display(char[][3], string[][5]);
@@ -24,13 +23,15 @@ void print2dArray(int [][3]);
 void testAlignments(int [][3]);
 void createGrid(char[][3], char[]); //char board char grid
 bool winOrBlock(int[][3], char[][3], char[]); //int q, char w, char grid
-void outputGrid(char[][3], char[]);
+void outputGrid(char[][3], char[], string[][5]);
 void outputAlignSymb(char[][3], char [][3]); //board, w
+
 
 int main() {
 
 
     string displayBoard[5][5];
+    string displayGrid[5][5];
     char board[3][3];
     char grid[9]; //added grid to more intuitively place the marked position & to transcribe 2d arrays to 1d
     int q[8][3]; //thought this should be declared here instead of inside a function. this contains the alignment combos for grid location
@@ -43,11 +44,13 @@ int main() {
 
     //TESTING -- TO BE DELETED LATERRR  
     testAlignments(q);
-    outputGrid(board, grid);
+    cout << endl;
+    outputGrid(board, grid, displayGrid);
     outputAlignSymb(board, w);
 
     while (replay == 'y' || replay == 'Y') {
         initBoard(board);
+        //        createGrid(board, grid); //create grid
 
         while (!gameOver(board)) {
             if (userTurn) {
@@ -55,12 +58,15 @@ int main() {
                 userInput(board, row, col);
                 board[row][col] = 'X';
             } else {
-                createGrid(board, grid);
                 AIMove(board, row, col);
                 printBuffer(100);
                 cout << "(the AI moved to spot x, y)\n" << endl;
-                outputAlignSymb(board, w);
             }
+
+            //TESTING PURPOSE -- TO BE DELETED LATER
+            outputAlignSymb(board, w); //This shows the char w[8][3] alignments
+            cout << winOrBlock(q, w, grid) << endl;
+
             userTurn = !userTurn;
         }
 
@@ -96,6 +102,10 @@ void initBoard(char board [][3]) {
             board[i][j] = ' ';
         }
     }
+}
+
+void initGrid(char grid[9]){
+    
 }
 
 void display(char board[][3], string displayBoard[][5]) {
@@ -288,8 +298,8 @@ void alignGridSymb(char board[][3], char w[][3]) {
     w[7][2] = board[2][2]; //8
 }
 
-
-void outputAlignSymb(char board[][3], char w[][3]){
+//this function outputs the symbols in the alignment w[8][3]
+void outputAlignSymb(char board[][3], char w[][3]) {
     alignGridSymb(board, w);
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 3; j++) {
@@ -338,24 +348,83 @@ void testAlignments(int q[][3]) {
     print2dArray(q);
 }
 
-void createGrid(char board[][3], char grid[]) {
+void createGrid(char board[][3], char grid[]) { //i think we can delete board[][]
 
-    grid[0] = board[0][0];
-    grid[1] = board[0][1];
-    grid[2] = board[0][2];
-    grid[3] = board[1][0];
-    grid[4] = board[1][1];
-    grid[5] = board[1][2];
-    grid[6] = board[2][0];
-    grid[7] = board[2][1];
-    grid[8] = board[2][2];
+//    grid[0] = board[0][0];
+//    grid[1] = board[0][1];
+//    grid[2] = board[0][2];
+//    grid[3] = board[1][0];
+//    grid[4] = board[1][1];
+//    grid[5] = board[1][2];
+//    grid[6] = board[2][0];
+//    grid[7] = board[2][1];
+//    grid[8] = board[2][2];
+    grid[0] = 0;
+    grid[1] = 1;
+    grid[2] = 2;
+    grid[3] = 3;
+    grid[4] = 4;
+    grid[5] = 5;
+    grid[6] = 6;
+    grid[7] = 7;
+    grid[8] = 8;
 }
 
-void outputGrid(char board[][3], char grid[]){
+void outputGrid(char board[][3], char grid[], string displayGrid[][5]) { //i think we can delete board[][] here
+    
     createGrid(board, grid);
-    for (int i = 0; i < 9; i ++){
-        cout << "grid[" << i << "]: " << i << endl;
+    
+//    for (int i = 0; i < 9; i++) {
+//        cout << "grid[" << i << "]: " << i << endl;
+//    }
+    int count = 0;
+    for (int i = 0; i < 5; i ++) {
+        for (int j = 0; j < 5; j++) {
+            if (isEven(i) && !isEven(j)) {
+                cout << "|";
+            } else if (!isEven(i) && !isEven(j)) {
+                cout << "+";
+            } else if (!isEven(i) && isEven(j)) {
+                cout << "---";
+            } else {
+                cout << " " << count << " ";
+                count++;
+            }
+        }
+        cout << endl;
     }
+//    for (int i = 0; i < 5; i++) {
+//        for (int j = 0; j < 5; j++) {
+//            if (isEven(i) && !isEven(j)) {
+//                displayGrid[i][j] = "|";
+//            } else if (!isEven(i) && !isEven(j)) {
+//                displayGrid[i][j] = "+";
+//            } else if (!isEven(i) && isEven(j)) {
+//                displayGrid[i][j] = "---";
+//            } else {
+//                string buffer = "  ";
+//                cout << i << " | " << j << endl;
+//                displayGrid[i][j] = buffer.insert(1, 1, board[i / 2][j / 2]);
+//            }
+//        }
+//    }
+//    string sideBuffer[5][6];
+//    for (int i = 0; i < 5; i++) {
+//        for (int j = 0; j < 6; j++) {
+//            if (j < 1) {
+//                sideBuffer[i][j] = "\t\t";
+//            } else {
+//                sideBuffer[i][j] = displayGrid[i][j - 1];
+//            }
+//        }
+//    }
+//    for (int i = 0; i < 5; i++) {
+//        for (int j = 0; j < 6; j++) {
+//            cout << sideBuffer[i][j];
+//        }
+//        cout << endl;
+//    }
+    
 }
 
 bool winOrBlock(int q[][3], char w[][3], char grid[]) {
@@ -375,8 +444,11 @@ bool winOrBlock(int q[][3], char w[][3], char grid[]) {
             if ((countX == 2 && countO == 0) || (countO == 2 && countX == 0)) {
                 for (int k = 0; k < 3; k++) {
                     if (w[i][k] == ' ') {
-                        int placeOnGrid = w[i][k];
+
+                        //////Right but how do i call this?
+                        int placeOnGrid = q[i][k];
                         grid[placeOnGrid] = 'O';
+
                         return true;
                     }
                 }
