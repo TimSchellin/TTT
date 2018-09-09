@@ -21,6 +21,7 @@ void placeOnBoard(char[9], int&, char);
 void align(int [][3], int&, int, int);
 void createAlignments(int [][3]);
 int completeRow(char[9], int[][3], char);
+bool checkOppositeCorners(char[9], char);
 
 //debugging functions
 void test();
@@ -28,6 +29,8 @@ void initQ(int [][3]);
 void print2dArray(int [][3]);
 void testAlignments();
  
+const char X = 'X';
+const char O = 'O';
 
 int main() {
 
@@ -67,7 +70,7 @@ int main() {
 }
 
 //
-//declaring function implementations
+// declaring function implementations
 //
 
 bool isEven(int checkPos) {
@@ -170,13 +173,14 @@ bool posAvailable(char board[9], int space) {
 
 // asks the user if it would like to see where the AI
 // suggests the best spot to move is
-void hintPrompt() {
+void hintPrompt(char board[9]) {
     char yesHint = ' ';
-    cout << "Do you want a hint? Enter Y to get a hint. Otherwise, enter anything to move on.";
+    cout << "Do you want a hint? Enter Y to get a hint. Otherwise, enter anything to move on.\n\tAnswer: ";
     cin >> yesHint;
 
     if (yesHint == 'Y' || yesHint == 'y') {
-        //Imple Algo;
+        cout << "\n\n\tHINT: claim position " << computerMove(board) << endl;
+
     }
 }
 
@@ -205,11 +209,10 @@ bool gameOver(char board[9]){
     }
 }
 
-// checks if there are not any more empty spaces left
-// on the board
+// checks if there are no more empty spaces left on the board
 bool boardFull(char board[9]){
     for(int i = 0; i < 9; i++){
-        if(!(board[i] == 'X' || board[i] == 'O')){
+        if(!(board[i] == O || board[i] == X)){
             return false;
         }
     }
@@ -241,15 +244,14 @@ void printBuffer(int lines){
     }
 }
 
+// 
 //
-//
-// AI FUNCTIONS BELOW
-//
+//  AI FUNCTIONS BELOW
+// 
 //
 
-// the steps the AI uses to determine where to move on the board
-// 
-int computerMove(char board[9], char symbol, char otherSymbol){
+// the steps the AI uses to determine where to move on the board 
+int computerMove(char board[9], char symbol, char opponentSymbol){
 
     //create a 2d array containing all rows (vertical, horizontal, and diagonal) from the board
     int q[8][3];
@@ -257,9 +259,9 @@ int computerMove(char board[9], char symbol, char otherSymbol){
 
     int move = -1;
     int condition1 = completeRow(board, q, symbol);
-    int condition2 = completeRow(board, q, otherSymbol);
+    int condition2 = completeRow(board, q, opponentSymbol);
 
-    // first priority os to try to complete a row
+    // first priority is to try to complete a row
     if(condition1 != -1){
         if(posAvailable(board, condition1)){
             move = condition1;
@@ -270,8 +272,17 @@ int computerMove(char board[9], char symbol, char otherSymbol){
         if(posAvailable(board, condition2)){
             move = condition2;
         }
+    }  
+    // third priority, if the opponent has taken two opposite corners, the AI choses to  take
+    // any side/edge spot, to prevent the opponent from making a fork
+    else if(checkOppositeCorners(board, opponentSymbol)){
+        for(int i = 1; i < 8; i += 2){
+            if(posAvailable(board, i)){
+                move = i;
+            }
+        }
     }
-    // third priorioty is to try to take the middle, if available
+    // fourth priorioty is to try to take the middle, if available
     else if(posAvailable(board, 4)){
         move = 4;
     }
@@ -296,10 +307,13 @@ int completeRow(char board[9], int q[][3], char symbol){
                 symbolCount++;
             }
         }
+
+        // if it finds two of the same symbol in a row, then it finds if the other spot
+        // in that row is an empty space and returns that index if it is
         if(symbolCount == 2){
-            for(int k = 0; k < 3; k++){
-                if(board[q[i][k]] == ' '){
-                    return q[i][k];
+            for(int j = 0; j < 3; j++){
+                if(board[q[i][j]] == ' '){
+                    return q[i][j];
                 }
             }
         }
@@ -307,6 +321,15 @@ int completeRow(char board[9], int q[][3], char symbol){
     return -1;
 }
 
+bool checkOppositeCorners(char board[9], char symbol){
+    if(board[0] == symbol && board[8] == symbol){
+        return true;
+    }
+    if(board[2] == symbol && board[6] == symbol){
+        return true;
+    }
+    return false;
+}
 // companion function to createAlignments(), it fills out each row of the 8x3 array by starting at a
 // given integer and incrementing by the given skip argument
 void align(int q[][3], int &c, int pos, int skip){
