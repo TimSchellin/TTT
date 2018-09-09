@@ -4,24 +4,32 @@
 
 using namespace std;
 
-//declaring function prototypes
-bool playerWin(char[9], char);
-bool boardFull(char[9]);
-bool gameOver(char[9]);
 
-bool isEven(int);
-void printBuffer(int);
-void display(char[9], string[][5]);
+// declaring function prototypes
+
+// game loop functions
 void initBoard(char[9]);
-void userInput(char[9], int&);
+bool gameOver(char[9]);
+bool boardFull(char[9]);
+bool playerWin(char[9], char);
 bool posAvailable(char[9], int);
-void hintPrompt();
-int computerMove(char[9]);
 void placeOnBoard(char[9], int&, char);
-void align(int [][3], int&, int, int);
-void createAlignments(int [][3]);
+
+// prompts
+int userInput(char[9]);
+bool gameModePrompt();
+
+// display
+void display(char[9], string[][5]);
+void printBuffer(int);
+bool isEven(int);
+
+// AI
+int computerMove(char[9]);
 int completeRow(char[9], int[][3], char);
 bool checkOppositeCorners(char[9], char);
+void createAlignments(int [][3]);
+void align(int [][3], int&, int, int);
 
 //debugging functions
 void test();
@@ -29,35 +37,41 @@ void initQ(int [][3]);
 void print2dArray(int [][3]);
 void testAlignments();
  
+// board symbols
 const char X = 'X';
 const char O = 'O';
 
 int main() {
-
-    test();
-    //testAlignments();
-
     string displayBoard[5][5];
     char board[9];
 
     bool userTurn = true;
-    int space;
-    int checkPos;
     char replay = 'y';
 
+    // replay the game as often as the player likes until they quit
     while(replay == 'y' || replay == 'Y'){
         initBoard(board);
+        bool playerVsAi = gameModePrompt();
 
-        while(!gameOver(board)){  
+        // main game loop
+        while(!gameOver(board)){
+            int move = 0;
+            display(board, displayBoard);
+            // players OR first AI turn
             if (userTurn){
-                display(board, displayBoard);
-                userInput(board, space);
-                board[space] = 'X';
+
+                if(playerVsAi){
+                    move = userInput(board);
+                }
+                else{
+                    move = computerMove(board);
+                }
+                placeOnBoard(board, move, O);
             }
+            // The opponent's turn
             else{
-                int move = computerMove(board);
-                printBuffer(100);
-                cout << "(the AI moved to spot x, y)\n" << endl;
+                move = computerMove(board);
+                placeOnBoard(board, move, X);
             }
             userTurn = !userTurn;
         }
@@ -65,20 +79,12 @@ int main() {
         cout << "would you like to play again? 'y' for yes, 'n' for no >>> ";
         cin >> replay;
     }
-
     return 0;
 }
 
 //
 // declaring function implementations
 //
-
-bool isEven(int checkPos) {
-    if (checkPos % 2 == 0) {
-        return true;
-    }
-    return false;
-}
 
 // fills out an empty char array with empty space chars
 void initBoard(char board[9]) {
@@ -87,110 +93,7 @@ void initBoard(char board[9]) {
     }
 }
 
-// displays a pretty tic tac toe board
-// with formatting
-void display(char board[9], string displayBoard[][5]) {
-
-    // number the empty spaces of the board
-    for(int i = 0; i < 9; i++){
-        if(board[i] == ' '){
-            char number = i;
-            board[i] = i;
-        }
-    }
-
-    // convert the board array into a 2D array for display purposes
-    char board2D[3][3];
-    int count = 0;
-    for(int i = 0; i < 3; i++){
-        for(int j = 0; i < 3; j++){
-            board2D[i][j] = board[count];
-            count++;
-        }
-    }
-
-    // transpose the board onto the octothorpe diagram of the tic-tac-toe board
-    for (int i = 0; i < 5; i++) {
-        for (int j = 0; j < 5; j++) {
-            if (isEven(i) && !isEven(j)) {
-                displayBoard[i][j] = "|";
-            } else if (!isEven(i) && !isEven(j)) {
-                displayBoard[i][j] = "+";
-            } else if (!isEven(i) && isEven(j)) {
-                displayBoard[i][j] = "---";
-            } else {
-                string buffer = "  ";
-                displayBoard[i][j] = buffer.insert(1, 1, board2D[i / 2][j / 2]);
-            }
-        }
-    }
-
-    // adds an 8 space buffer between the left side
-    // of the console and the tic tac toe board. 
-    string sideBuffer[5][6];
-    for(int i = 0; i < 5; i++){
-        for (int j = 0; j < 6; j++){
-            if(j < 1){
-                sideBuffer[i][j] = "\t\t";
-            }
-            else{
-                sideBuffer[i][j] = displayBoard[i][j-1];
-            }
-        }
-    }
-    for (int i = 0; i < 5; i++) {
-        for (int j = 0; j < 6; j++) {
-            cout << sideBuffer[i][j];
-        }
-        cout << endl;
-    }
-}
-
-// container for the dialog and prompts that are needed
-// for the user to play the game.
-void userInput(char board[9], int& space) {
-    cout << "\nEnter the location where you want to place your mark.\n" << endl;
-    cout << "\t\tspace: ";
-    cin >> space;
-    space -= 1;
-    if(!posAvailable(board, space)){
-        cout << "that is not a valid location, try again." << endl;
-        userInput(board, space);
-    }
-}
-
-// checks to see if the selected space is not taken
-// on the board
-bool posAvailable(char board[9], int space) {
-    if (board[space] != ' ') {
-        return false;
-    } 
-    else if (space < 0 || space > 9) {
-        return false;
-    }
-    return true;
-}
-
-// asks the user if it would like to see where the AI
-// suggests the best spot to move is
-void hintPrompt(char board[9]) {
-    char yesHint = ' ';
-    cout << "Do you want a hint? Enter Y to get a hint. Otherwise, enter anything to move on.\n\tAnswer: ";
-    cin >> yesHint;
-
-    if (yesHint == 'Y' || yesHint == 'y') {
-        cout << "\n\n\tHINT: claim position " << computerMove(board) << endl;
-
-    }
-}
-
-// puts the desired symbol in the specified spot on the board
-void placeOnBoard(char board[9], int& space, char symbol) {
-    board[space] = symbol;
-}
-
-// checks to see if either the board is full or if
-// someone has won the game
+// checks to see if either the board is full or if someone has won the game
 bool gameOver(char board[9]){
     if(playerWin(board, 'X')){
         cout << "X wins!";
@@ -237,11 +140,20 @@ bool playerWin(char board[9], char symbol){
     return false;
 }
 
-// prints n lines, used for refreshing/ updating the board every turn
-void printBuffer(int lines){
-    for(int i = 0; i < lines; i++){
-        cout << endl;
+// checks to see if the selected space is not taken on the board
+bool posAvailable(char board[9], int space) {
+    if (board[space] != ' ') {
+        return false;
+    } 
+    else if (space < 0 || space > 9) {
+        return false;
     }
+    return true;
+}
+
+// puts the desired symbol in the specified spot on the board
+void placeOnBoard(char board[9], int& space, char symbol) {
+    board[space] = symbol;
 }
 
 // 
@@ -321,6 +233,7 @@ int completeRow(char board[9], int q[][3], char symbol){
     return -1;
 }
 
+// checks to see if the two corners diagonally opposite eachother on the board have the same symbol
 bool checkOppositeCorners(char board[9], char symbol){
     if(board[0] == symbol && board[8] == symbol){
         return true;
@@ -329,16 +242,6 @@ bool checkOppositeCorners(char board[9], char symbol){
         return true;
     }
     return false;
-}
-// companion function to createAlignments(), it fills out each row of the 8x3 array by starting at a
-// given integer and incrementing by the given skip argument
-void align(int q[][3], int &c, int pos, int skip){
-    cout << endl;
-    for(int i = 0; i < 3; i++){
-        q[c][i] = pos;
-        pos += skip;
-    }
-    c++;
 }
 
 // creates a 2d array that contains all possible rows/alignments for which can win by having '3' in a row
@@ -367,6 +270,136 @@ void createAlignments(int alignments[][3]){
             }
         }
     }
+}
+
+// companion function to createAlignments(), it fills out each row of the 8x3 array by starting at a
+// given integer and incrementing by the given skip argument
+void align(int q[][3], int &c, int pos, int skip){
+    cout << endl;
+    for(int i = 0; i < 3; i++){
+        q[c][i] = pos;
+        pos += skip;
+    }
+    c++;
+}
+
+//
+//
+// Prompts & Dialog Functions
+//
+//
+
+// container for the dialog and prompts that are needed for the user to play the game.
+int userInput(char board[9]) {
+    char space;
+    cout << "\nEnter the location where you want to place your mark. (type '?' for a hint)" << endl;
+    cout << "\t\tspace: ";
+    cin >> space;
+    if(space == '?'){
+        cout << "\nHINT: claim position " << computerMove(board)+1 <<"\n\n";
+        userInput(board);
+    }
+    int boardIndex = space;
+    boardIndex -= 1;
+
+    if(!posAvailable(board, space)){
+        cout << "that is not a valid location, try again." << endl;
+        userInput(board);
+    }
+    return boardIndex;
+}
+
+bool gameModePrompt(){
+    char answer = 1;
+    cout << " Please select a game mode: " << endl;
+    cout << "\t\t1. Player vs Computer AI" << endl;
+    cout << "\t\t2. AI vs AI";
+    cout << "chose a number >> ";
+    cin >> answer;
+    if(answer == '1'){
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+
+//
+//
+// Printing/Display Fucntions
+//
+//
+
+// displays a pretty tic tac toe board with formatting
+void display(char board[9], string displayBoard[][5]) {
+
+    // number the empty spaces of the board
+    for(int i = 0; i < 9; i++){
+        if(board[i] == ' '){
+            char number = i;
+            board[i] = i;
+        }
+    }
+
+    // convert the board array into a 2D array for display purposes
+    char board2D[3][3];
+    int count = 0;
+    for(int i = 0; i < 3; i++){
+        for(int j = 0; i < 3; j++){
+            board2D[i][j] = board[count];
+            count++;
+        }
+    }
+
+    // transpose the board onto the octothorpe diagram of the tic-tac-toe board
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 5; j++) {
+            if (isEven(i) && !isEven(j)) {
+                displayBoard[i][j] = "|";
+            } else if (!isEven(i) && !isEven(j)) {
+                displayBoard[i][j] = "+";
+            } else if (!isEven(i) && isEven(j)) {
+                displayBoard[i][j] = "---";
+            } else {
+                string buffer = "  ";
+                displayBoard[i][j] = buffer.insert(1, 1, board2D[i / 2][j / 2]);
+            }
+        }
+    }
+
+    // adds an 8 space buffer between the left side of the console and the tic tac toe board. 
+    string sideBuffer[5][6];
+    for(int i = 0; i < 5; i++){
+        for (int j = 0; j < 6; j++){
+            if(j < 1){
+                sideBuffer[i][j] = "\t\t";
+            }
+            else{
+                sideBuffer[i][j] = displayBoard[i][j-1];
+            }
+        }
+    }
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 6; j++) {
+            cout << sideBuffer[i][j];
+        }
+        cout << endl;
+    }
+}
+
+// prints n lines, used for refreshing/ updating the board every turn
+void printBuffer(int lines){
+    for(int i = 0; i < lines; i++){
+        cout << endl;
+    }
+}
+
+// check if integer is even, only used by the display() Function.
+bool isEven(int i){
+    if(i%2 == 0){
+        return true;
+    }
+    return false;
 }
 
 //
