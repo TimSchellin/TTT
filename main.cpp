@@ -28,6 +28,7 @@ void initQ(int [][3]);
 void print2dArray(int [][3]);
 void testAlignments();
  
+
 int main() {
 
     test();
@@ -65,7 +66,9 @@ int main() {
     return 0;
 }
 
+//
 //declaring function implementations
+//
 
 bool isEven(int checkPos) {
     if (checkPos % 2 == 0) {
@@ -74,14 +77,36 @@ bool isEven(int checkPos) {
     return false;
 }
 
+// fills out an empty char array with empty space chars
 void initBoard(char board[9]) {
     for (int i = 0; i < 9; i++) {
-        char c = i;
-        board[i] = c;
+        board[i] = ' ';
     }
 }
 
+// displays a pretty tic tac toe board
+// with formatting
 void display(char board[9], string displayBoard[][5]) {
+
+    // number the empty spaces of the board
+    for(int i = 0; i < 9; i++){
+        if(board[i] == ' '){
+            char number = i;
+            board[i] = i;
+        }
+    }
+
+    // convert the board array into a 2D array for display purposes
+    char board2D[3][3];
+    int count = 0;
+    for(int i = 0; i < 3; i++){
+        for(int j = 0; i < 3; j++){
+            board2D[i][j] = board[count];
+            count++;
+        }
+    }
+
+    // transpose the board onto the octothorpe diagram of the tic-tac-toe board
     for (int i = 0; i < 5; i++) {
         for (int j = 0; j < 5; j++) {
             if (isEven(i) && !isEven(j)) {
@@ -92,10 +117,13 @@ void display(char board[9], string displayBoard[][5]) {
                 displayBoard[i][j] = "---";
             } else {
                 string buffer = "  ";
-                //displayBoard[i][j] = buffer.insert(1, 1, board[i / 2][j / 2]);
+                displayBoard[i][j] = buffer.insert(1, 1, board2D[i / 2][j / 2]);
             }
         }
     }
+
+    // adds an 8 space buffer between the left side
+    // of the console and the tic tac toe board. 
     string sideBuffer[5][6];
     for(int i = 0; i < 5; i++){
         for (int j = 0; j < 6; j++){
@@ -115,6 +143,8 @@ void display(char board[9], string displayBoard[][5]) {
     }
 }
 
+// container for the dialog and prompts that are needed
+// for the user to play the game.
 void userInput(char board[9], int& space) {
     cout << "\nEnter the location where you want to place your mark.\n" << endl;
     cout << "\t\tspace: ";
@@ -126,6 +156,8 @@ void userInput(char board[9], int& space) {
     }
 }
 
+// checks to see if the selected space is not taken
+// on the board
 bool posAvailable(char board[9], int space) {
     if (board[space] != ' ') {
         return false;
@@ -136,6 +168,8 @@ bool posAvailable(char board[9], int space) {
     return true;
 }
 
+// asks the user if it would like to see where the AI
+// suggests the best spot to move is
 void hintPrompt() {
     char yesHint = ' ';
     cout << "Do you want a hint? Enter Y to get a hint. Otherwise, enter anything to move on.";
@@ -146,10 +180,13 @@ void hintPrompt() {
     }
 }
 
+// puts the desired symbol in the specified spot on the board
 void placeOnBoard(char board[9], int& space, char symbol) {
     board[space] = symbol;
 }
 
+// checks to see if either the board is full or if
+// someone has won the game
 bool gameOver(char board[9]){
     if(playerWin(board, 'X')){
         cout << "X wins!";
@@ -168,6 +205,8 @@ bool gameOver(char board[9]){
     }
 }
 
+// checks if there are not any more empty spaces left
+// on the board
 bool boardFull(char board[9]){
     for(int i = 0; i < 9; i++){
         if(!(board[i] == 'X' || board[i] == 'O')){
@@ -177,10 +216,25 @@ bool boardFull(char board[9]){
     return true;
 }
 
+// checks to see if anyone has won the game
 bool playerWin(char board[9], char symbol){
+    int q[8][3];
+    createAlignments(q);
+    for(int i = 0; i < 8; i++){
+        int symbolCount = 0;
+        for(int j = 0; j < 3; j++){
+            if(board[q[i][j]] == symbol){
+                symbolCount++;
+            }
+        }
+        if(symbolCount == 3){
+            return true;
+        }
+    }
     return false;
 }
 
+// prints n lines, used for refreshing/ updating the board every turn
 void printBuffer(int lines){
     for(int i = 0; i < lines; i++){
         cout << endl;
@@ -193,6 +247,8 @@ void printBuffer(int lines){
 //
 //
 
+// the steps the AI uses to determine where to move on the board
+// 
 int computerMove(char board[9], char symbol, char otherSymbol){
 
     //create a 2d array containing all rows (vertical, horizontal, and diagonal) from the board
@@ -203,23 +259,23 @@ int computerMove(char board[9], char symbol, char otherSymbol){
     int condition1 = completeRow(board, q, symbol);
     int condition2 = completeRow(board, q, otherSymbol);
 
-    // try to complete a row
+    // first priority os to try to complete a row
     if(condition1 != -1){
         if(posAvailable(board, condition1)){
             move = condition1;
         }
     }
-    // try to block the opponent from completing a row
+    // second priority is to try to block the opponent from completing a row
     else if(condition2 != -1){
         if(posAvailable(board, condition2)){
             move = condition2;
         }
     }
-    // try to take the middle, if available
+    // third priorioty is to try to take the middle, if available
     else if(posAvailable(board, 4)){
         move = 4;
     }
-    // take a corner
+    // lastly, if nothing else can be done, take a corner
     else{
         for(int i = 0; i < 9; i+=2){
             if(posAvailable(board, i)){
@@ -230,10 +286,8 @@ int computerMove(char board[9], char symbol, char otherSymbol){
     return move;
 }
 
-int findEmpty(char board[9]){
-    return 0;
-}
-
+// checks to see if there is a row that has two of the same symbol and one empty space, 
+// so as to either win by completing that row, or block the opponent from winning
 int completeRow(char board[9], int q[][3], char symbol){
     for(int i = 0; i < 8; i++){
         int symbolCount = 0;
@@ -253,6 +307,8 @@ int completeRow(char board[9], int q[][3], char symbol){
     return -1;
 }
 
+// companion function to createAlignments(), it fills out each row of the 8x3 array by starting at a
+// given integer and incrementing by the given skip argument
 void align(int q[][3], int &c, int pos, int skip){
     cout << endl;
     for(int i = 0; i < 3; i++){
@@ -262,6 +318,9 @@ void align(int q[][3], int &c, int pos, int skip){
     c++;
 }
 
+// creates a 2d array that contains all possible rows/alignments for which can win by having '3' in a row
+// the 2d array is an integer 8x3 array and contains the index of the corresponding spot on the game board,
+// the pattern for the alignments is created algorithmically here.
 void createAlignments(int alignments[][3]){
     int c = 0;
 
