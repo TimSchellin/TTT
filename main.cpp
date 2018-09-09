@@ -4,7 +4,6 @@
 
 using namespace std;
 
-
 // declaring function prototypes
 
 // game loop functions
@@ -20,31 +19,33 @@ int userInput(char[9]);
 bool gameModePrompt();
 
 // display
-void display(char[9], string[][5]);
+void display(char[9]);
 void printBuffer(int);
 bool isEven(int);
 
 // AI
-int computerMove(char[9]);
+int computerMove(char[9], char, char);
 int completeRow(char[9], int[][3], char);
+bool checkCorner(char[9]);
 bool checkOppositeCorners(char[9], char);
-void createAlignments(int [][3]);
+void createAlignments(int[][3]);
 void align(int [][3], int&, int, int);
 
 //debugging functions
+void dp(char[9]);
 void test();
-void initQ(int [][3]);
-void print2dArray(int [][3]);
+void initQ(int[][3]);
+void print2dArray(int[][3]);
 void testAlignments();
+
+char intToChar(int);
  
 // board symbols
 const char X = 'X';
 const char O = 'O';
 
 int main() {
-    string displayBoard[5][5];
     char board[9];
-
     bool userTurn = true;
     char replay = 'y';
 
@@ -56,7 +57,7 @@ int main() {
         // main game loop
         while(!gameOver(board)){
             int move = 0;
-            display(board, displayBoard);
+            display(board);
             // players OR first AI turn
             if (userTurn){
 
@@ -64,20 +65,22 @@ int main() {
                     move = userInput(board);
                 }
                 else{
-                    move = computerMove(board);
+                    move = computerMove(board, O, X);
                 }
                 placeOnBoard(board, move, O);
             }
             // The opponent's turn
             else{
-                move = computerMove(board);
+                move = computerMove(board, X, O);
                 placeOnBoard(board, move, X);
             }
             userTurn = !userTurn;
+            printBuffer(100);
         }
 
-        cout << "would you like to play again? 'y' for yes, 'n' for no >>> ";
+        cout << "\nwould you like to play again? 'y' for yes, 'n' for no >>> ";
         cin >> replay;
+        printBuffer(100);
     }
     return 0;
 }
@@ -96,15 +99,18 @@ void initBoard(char board[9]) {
 // checks to see if either the board is full or if someone has won the game
 bool gameOver(char board[9]){
     if(playerWin(board, 'X')){
-        cout << "X wins!";
+        display(board);
+        cout << "\n\t\tX wins!\n";
         return true;
     }
     else if(playerWin(board, 'O')){
-        cout << "O wins!";
+        display(board);
+        cout << "\n\t\tO wins!\n";
         return true;
     }
     else if(boardFull(board)){
-        cout << "tie!";
+        display(board);
+        cout << "\n\t\ttie!\n";
         return true;
     }
     else{
@@ -154,6 +160,7 @@ bool posAvailable(char board[9], int space) {
 // puts the desired symbol in the specified spot on the board
 void placeOnBoard(char board[9], int& space, char symbol) {
     board[space] = symbol;
+    //cout << "\nboard[" << space << "] > " << board[space] << " <\n\n";
 }
 
 // 
@@ -164,7 +171,6 @@ void placeOnBoard(char board[9], int& space, char symbol) {
 
 // the steps the AI uses to determine where to move on the board 
 int computerMove(char board[9], char symbol, char opponentSymbol){
-
     //create a 2d array containing all rows (vertical, horizontal, and diagonal) from the board
     int q[8][3];
     createAlignments(q);
@@ -198,9 +204,17 @@ int computerMove(char board[9], char symbol, char opponentSymbol){
     else if(posAvailable(board, 4)){
         move = 4;
     }
-    // lastly, if nothing else can be done, take a corner
-    else{
+    // if nothing else can be done, take a corner
+    else if(checkCorner(board)){
         for(int i = 0; i < 9; i+=2){
+            if(posAvailable(board, i)){
+                move = i;
+            }
+        }
+    }
+    // lastlty, take an open space if all else fails
+    else{
+        for(int i = 1; i < 9; i+=2){
             if(posAvailable(board, i)){
                 move = i;
             }
@@ -233,7 +247,17 @@ int completeRow(char board[9], int q[][3], char symbol){
     return -1;
 }
 
-// checks to see if the two corners diagonally opposite eachother on the board have the same symbol
+// find if there is an empty corner space on the board
+bool checkCorner(char board[9]){ 
+    for(int i = 0; i < 9; i+=2){
+        if(posAvailable(board, i)){
+            return true;
+        }
+    }
+    return false;
+}
+
+// check to see if the two corners diagonally opposite eachother on the board have the same symbol
 bool checkOppositeCorners(char board[9], char symbol){
     if(board[0] == symbol && board[8] == symbol){
         return true;
@@ -244,7 +268,7 @@ bool checkOppositeCorners(char board[9], char symbol){
     return false;
 }
 
-// creates a 2d array that contains all possible rows/alignments for which can win by having '3' in a row
+// create a 2d array that contains all possible rows/alignments for which can win by having '3' in a row
 // the 2d array is an integer 8x3 array and contains the index of the corresponding spot on the game board,
 // the pattern for the alignments is created algorithmically here.
 void createAlignments(int alignments[][3]){
@@ -275,7 +299,6 @@ void createAlignments(int alignments[][3]){
 // companion function to createAlignments(), it fills out each row of the 8x3 array by starting at a
 // given integer and incrementing by the given skip argument
 void align(int q[][3], int &c, int pos, int skip){
-    cout << endl;
     for(int i = 0; i < 3; i++){
         q[c][i] = pos;
         pos += skip;
@@ -292,30 +315,35 @@ void align(int q[][3], int &c, int pos, int skip){
 // container for the dialog and prompts that are needed for the user to play the game.
 int userInput(char board[9]) {
     char space;
+    int boardIndex;
+
     cout << "\nEnter the location where you want to place your mark. (type '?' for a hint)" << endl;
     cout << "\t\tspace: ";
     cin >> space;
-    if(space == '?'){
-        cout << "\nHINT: claim position " << computerMove(board)+1 <<"\n\n";
-        userInput(board);
-    }
-    int boardIndex = space;
-    boardIndex -= 1;
 
-    if(!posAvailable(board, space)){
+    boardIndex = space-49;
+
+    if(space == '?'){
+        cout << "\n\tHINT: claim position " << computerMove(board, O, X) + 1 <<"\n";
+        boardIndex = userInput(board);
+    }
+
+    if(!posAvailable(board, boardIndex)){
         cout << "that is not a valid location, try again." << endl;
-        userInput(board);
+        boardIndex = userInput(board);
     }
     return boardIndex;
 }
 
 bool gameModePrompt(){
     char answer = 1;
-    cout << " Please select a game mode: " << endl;
+    cout << "Please select a game mode:\n" << endl;
     cout << "\t\t1. Player vs Computer AI" << endl;
     cout << "\t\t2. AI vs AI";
-    cout << "chose a number >> ";
+    cout << "\n\n\tchose a number >> ";
     cin >> answer;
+    printBuffer(100);
+
     if(answer == '1'){
         return true;
     }
@@ -331,27 +359,24 @@ bool gameModePrompt(){
 //
 
 // displays a pretty tic tac toe board with formatting
-void display(char board[9], string displayBoard[][5]) {
-
-    // number the empty spaces of the board
-    for(int i = 0; i < 9; i++){
-        if(board[i] == ' '){
-            char number = i;
-            board[i] = i;
-        }
-    }
-
-    // convert the board array into a 2D array for display purposes
+void display(char board[9]) {
+    // convert the board array into a 2D array  and number empty spaces
     char board2D[3][3];
     int count = 0;
     for(int i = 0; i < 3; i++){
-        for(int j = 0; i < 3; j++){
-            board2D[i][j] = board[count];
+        for(int j = 0; j < 3; j++){
+            if(board[count] == ' '){
+                board2D[i][j] = intToChar(count+1);
+            }
+            else{
+                board2D[i][j] = board[count];
+            }
             count++;
         }
     }
 
     // transpose the board onto the octothorpe diagram of the tic-tac-toe board
+    string displayBoard[5][5];
     for (int i = 0; i < 5; i++) {
         for (int j = 0; j < 5; j++) {
             if (isEven(i) && !isEven(j)) {
@@ -385,6 +410,7 @@ void display(char board[9], string displayBoard[][5]) {
         }
         cout << endl;
     }
+    cout << endl;
 }
 
 // prints n lines, used for refreshing/ updating the board every turn
@@ -438,4 +464,10 @@ void test(){
     createAlignments(q);
     int result = completeRow(testBoard, q, 'X');
     cout << result;
+}
+
+// dumb cast int to char
+char intToChar(int i){
+    char j[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
+    return j[i];
 }
