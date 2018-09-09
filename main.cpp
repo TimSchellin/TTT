@@ -317,7 +317,7 @@ int userInput(char board[9]) {
     char space;
     int boardIndex;
 
-    cout << "\nEnter the location where you want to place your mark. (type '?' for a hint)" << endl;
+    cout << "\nEnter the location where you want to place your mark.\n(type '?' for a hint)\n\n";
     cout << "\t\tspace: ";
     cin >> space;
 
