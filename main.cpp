@@ -518,3 +518,61 @@ char intToChar(int i) {
 	char j[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
 	return j[i];
 }
+
+
+
+
+
+bool moveTwo(char board[9], char symbol)
+{
+	int total = 0;
+	for (int i = 1; i < 9; i++) {
+		if (board[i] == symbol) {
+			total++;
+		}
+	}
+	if (total == 2)
+		return true;
+	return false;
+}
+
+int defeatFork(char board[9], char symbol)
+{
+	if (moveTwo(board, symbol))
+	{
+		if(!posAvailable(board, 1)&&!posAvailable(board, 6))
+		{ 
+			return 0;
+		}
+		if ((posAvailable(board, 1) && !posAvailable(board, 8))
+		{
+			return 2;
+		}
+		if(!posAvailable(board, 3) && (!posAvailable(board, 2))
+		{ 
+			return 0;
+		}
+		if (!posAvailable(board, 3) && !posAvailable(board, 8))
+		{
+			return 6;
+		}
+		if(!posAvailable(board, 5) && !posAvailable(board, 0))
+		{ 
+			return 2;
+		}
+		if (!posAvailable(board, 5) && !posAvailable(board, 6))
+		{
+			return 8;
+		}
+		if (!posAvailable(board, 7) && !posAvailable(board, 0))
+		{
+			return 6;
+		}
+		if (!posAvailable(board, 7) && !posAvailable(board, 2))
+		{
+			return 8;
+		}
+	}
+
+	return -1;
+}
