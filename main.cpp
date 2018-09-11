@@ -20,6 +20,7 @@ int gameModePrompt();
 
 // display
 void display(char[9]);
+char[][3] from1Dto2D(char[9]);
 void printBuffer(int);
 bool isEven(int);
 
@@ -439,6 +440,24 @@ void display(char board[9]) {
 		cout << endl;
 	}
 	cout << endl;
+}
+
+char[][3] from1Dto2D(char board[9]) // converts a 1D array into a 2D array
+{
+	char board2D[3][3];
+	int count = 0;
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			if (board[count] == ' ') {
+				board2D[i][j] = intToChar(count + 1);
+			}
+			else {
+				board2D[i][j] = board[count];
+			}
+			count++;
+		}
+	}
+	return board2D;
 }
 
 // prints n lines, used for refreshing/ updating the board every turn
